@@ -1,23 +1,29 @@
-import * as Discord from 'discord.js';
+import { Client } from 'discord.js';
 import { token } from '../bot.config.json';
+import searchOnGoogle from './services/search';
 
-const client = new Discord.Client();
+const client = new Client();
 
 client.once('ready', () => {
   console.log(`🚀 Logged in as ${client.user.tag}!`);
 });
 
-client.login(token);
-
-client.on('message', (msg) => {
+client.on('message', async (msg) => {
   const parsedMessage = msg.toString();
 
-  const [callGoogle, content] = parsedMessage.split('!');
-
-  if (!callGoogle.includes('google')) {
-    return console.log('You should put Google on your message');
+  if (msg.author.bot === true) {
+    return 'Only Humans can call me. Sorry Alexa.';
   }
 
-  return console.log(callGoogle, content);
-  // msg.content(['hey google', content])
+  if (msg.content.includes('google!')) {
+    const [, content] = parsedMessage.split(/!(.+)/);
+
+    const response = await searchOnGoogle(content);
+
+    msg.reply(response);
+  } else {
+    return msg.reply('Você deve me chamar com "Google!" na frente');
+  }
 });
+
+client.login(token);
