@@ -1,1 +1,7 @@
-// import * as Discord from 'discord.js';
+import { Client } from 'discord.js';
+
+const client = new Client();
+
+client.on('message', (message) => {
+  console.log(message);
+});

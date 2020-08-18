@@ -17,20 +17,15 @@ export default async function searchOnGoogle(searchObject: string) {
     }),
   ]);
 
-  const searchResult = await page.evaluate(() => {
-    const spanSelector = 'div[role] > span > span';
-    const listSelector = 'div.mod';
+  const listSelector = 'div.mod';
+  const spanSelector = 'div[role] > span > span';
+  const searchResult = await page.$eval(spanSelector, (object) => object.innerText);
 
-    return document.querySelector(spanSelector).innerHTML;
+  // TODO: implement detection of listSelector or spanSelector
 
-    // if (document.querySelector(spanSelector).innerText === '' || null) {
-    //   return document.querySelector(listSelector).innerText;
-    // }
-
-    // if (document.querySelector(listSelector).innerText === '' || null) {
-    //   return document.querySelector(spanSelector).innerText;
-    // }
-  });
+  // const searchResult = await page.evaluate(() => {
+  //   return document.querySelector(spanSelector).innerText;
+  // });
 
   await browser.close();
   return searchResult;
