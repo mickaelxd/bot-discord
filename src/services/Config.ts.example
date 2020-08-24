@@ -1,3 +1,0 @@
-export const token: string = 'YOUR_TOKEN_HERE';
-export const prefix: string = 'YOUR_PREFIX_HERE';
-export const owners: Array<string> = [];
