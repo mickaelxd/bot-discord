@@ -1,6 +1,5 @@
 import { Client } from 'discord.js';
 import wiki from 'wikijs';
-// import isNotANumber from 'number';
 import { prefix, token } from './services/Config';
 
 const client = new Client();
@@ -16,43 +15,50 @@ client.once('ready', () => {
 });
 
 client.on('message', async (msg) => {
+  if (msg.author.bot) return null;
+  if (!msg.content.startsWith(prefix)) return null;
+
   if (msg.content.startsWith(`${prefix}help`)) {
-    return msg.reply(
-      `bem vindo! Eu sou o Bot da Equipe Da Teta Grande e estou aqui para te auxiliar em todas as suas dúvidas. \nComandos:\n ${'```'}markdown\n${prefix}help - Ver os comandos \n${prefix}wiki - Pesquisar na wikipedia \n${prefix}play - Tocar música (Youtube)${'```'}`,
+    return msg.channel.send(
+      `Bem vindo! Eu sou o Bot da Equipe Da Teta Grande e estou aqui para te auxiliar em todas as suas dúvidas. \nComandos:\n ${'```'}markdown\n${prefix}help - Ver os comandos \n${prefix}wiki - Pesquisar na wikipedia \n${prefix}play - Tocar música${'```'}`,
     );
   }
 
   if (msg.content.startsWith(`${prefix}wiki`)) {
     const [, args] = msg.toString().split(/\s(.+)/);
 
-    try {
-      await wiki({
-        apiUrl: 'https://pt.wikipedia.org/w/api.php',
-      }).page(args);
-    } catch (e) {
-      console.log(e);
-      return msg.reply('não encontrei o que você procura');
+    if (!args) {
+      return msg.channel.send('Você deve enviar um assunto para eu pesquisar.');
     }
 
     const api = await wiki({
       apiUrl: 'https://pt.wikipedia.org/w/api.php',
-    }).page(args);
+    });
 
-    const content = await api.summary();
+    const searchContent = await (await api.search(args)).results[0];
 
-    if (content.length > 2000) {
-      return msg.channel.send('O conteúdo é grande demais para uma mensagem Discord.');
+    if (!searchContent) {
+      return msg.channel.send('Eu não consegui encontrar o que você procura.');
     }
 
-    msg.channel.send(content);
+    const content = await (await api.page(searchContent)).summary();
+
+    if (content.length > 2000) {
+      return content.split('\n').map((paragraph) => {
+        if (paragraph !== '') {
+          return msg.channel.send(paragraph);
+        }
+
+        return null;
+      });
+    }
+
+    return msg.channel.send(content);
   }
 
   if (msg.content.startsWith(`${prefix}play`)) {
-    // const [, args] = msg.toString().split(/\s(.+)/);
-
-    return msg.channel.send('Eu ainda não consigo tocar música');
+    return msg.channel.send('Pra que tu precisa de mais um bot de música? De qualquer forma eu ainda não sei tocar música, mas você pode doar dinheiros para o dono do projeto para que ele possa se esforçar e aprender mais sobre como fazer eu tocar uma musiquinha legal.');
   }
-
   return null;
 });
 
