@@ -1,6 +1,13 @@
-import { Client } from 'discord.js';
+import { Client, MessageEmbed } from 'discord.js';
 import wiki from 'wikijs';
+import axios from 'axios';
 import { prefix, token } from './services/Config';
+
+interface Repository {
+  id?: Number;
+  name?: String;
+  description?: String;
+}
 
 const client = new Client();
 
@@ -15,8 +22,7 @@ client.once('ready', () => {
 });
 
 client.on('message', async (msg) => {
-  if (msg.author.bot) return null;
-  if (!msg.content.startsWith(prefix)) return null;
+  if (!msg.content.startsWith(prefix) || msg.author.bot) return null;
 
   if (msg.content.startsWith(`${prefix}help`)) {
     return msg.channel.send(
@@ -31,11 +37,11 @@ client.on('message', async (msg) => {
       return msg.channel.send('Você deve enviar um assunto para eu pesquisar.');
     }
 
-    const api = await wiki({
+    const api = wiki({
       apiUrl: 'https://pt.wikipedia.org/w/api.php',
     });
 
-    const searchContent = await (await api.search(args)).results[0];
+    const searchContent = (await api.search(args)).results[0];
 
     if (!searchContent) {
       return msg.channel.send('Eu não consegui encontrar o que você procura.');
@@ -54,6 +60,35 @@ client.on('message', async (msg) => {
     }
 
     return msg.channel.send(content);
+  }
+
+  if (msg.content.startsWith(`${prefix}github`)) {
+    const [, args] = msg.toString().split(/\s(.+)/);
+
+    if (!args) {
+      return msg.channel.send('Você deve enviar um perfil para pesquisar.');
+    }
+
+    const { data: user } = await axios.get(`https://api.github.com/users/${args}`);
+    const { data: repos } = await axios.get(`https://api.github.com/users/${args}/repos`);
+
+    const repositories = repos.map((repo: Repository) => (
+      { name: `${repo.name}`, value: `${repo.description ? repo.description : 'No description available'}` }
+    ));
+
+    const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+
+    const embedMessage = new MessageEmbed()
+      .setColor(randomColor)
+      .setTitle('Github Profile')
+      .setAuthor(user.login, user.avatar_url, user.url)
+      .setDescription(user.bio ? user.bio : 'No description available')
+      .setThumbnail(user.avatar_url)
+      .addFields(repositories)
+      .setTimestamp();
+
+    // console.log(embedMessage);
+    msg.channel.send(embedMessage);
   }
 
   if (msg.content.startsWith(`${prefix}play`)) {
